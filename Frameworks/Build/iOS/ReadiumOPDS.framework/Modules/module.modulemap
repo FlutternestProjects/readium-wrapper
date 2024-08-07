@@ -1,4 +1,11 @@
 framework module ReadiumOPDS {
+  umbrella header "ReadiumOPDS-umbrella.h"
+
+  export *
+  module * { export * }
+}
+
+module ReadiumOPDS.Swift {
   header "ReadiumOPDS-Swift.h"
   requires objc
 }

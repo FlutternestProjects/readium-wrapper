@@ -6,12 +6,10 @@
 
 import Foundation
 import UIKit
-import R2Shared
-import R2Streamer
+import ReadiumStreamer
+import ReadiumShared
 
-public class ReadiumWrapper: ReaderFormatModuleDelegate {
-    
-    var server: PublicationServer! = nil
+public class ReadiumWrapper {
     var navController: UINavigationController! = nil
     
     var darkMode: Bool! = nil
@@ -20,21 +18,15 @@ public class ReadiumWrapper: ReaderFormatModuleDelegate {
         contentProtections: []
     )
     
+    private var app: AppModule!
+
+    
     public init(darkMode: Bool? = false) {
-        guard let s = PublicationServer() else {
-            print("Could not start publication server...")
-            return
-        }
-        server = s
+        app = try! AppModule();
         self.darkMode = darkMode
     }
     
-    public func open(at: String, sender: UIViewController) {
-        if (server == nil) {
-            print("Server is not running")
-            return
-        }
-        
+    public func open(at: String, sender: UINavigationController) {
         let url = URL(fileURLWithPath: at)
         self.openPublication(at: url, allowUserInteraction: false, sender: sender)
             // Map on background because we will read the publication cover to create the
@@ -49,7 +41,7 @@ public class ReadiumWrapper: ReaderFormatModuleDelegate {
                 
                 switch result {
                 case .success((let publication, let book)):
-                    self.showBook(publication: publication, book: book, sender: sender)
+                    self.showBook(publication: publication, book: book, uiNavController: sender)
                     
                 case .cancelled:
                     print("cancelled")
@@ -61,19 +53,9 @@ public class ReadiumWrapper: ReaderFormatModuleDelegate {
             }
     }
     
-    private func showBook(publication: Publication, book: Book, sender: UIViewController) {
-        func present(_ viewController: UIViewController) {
-            navController = UINavigationController(rootViewController: viewController)
-            navController.modalPresentationStyle = .fullScreen
-            viewController.hidesBottomBarWhenPushed = true
-            sender.present(navController, animated: true, completion: nil)
-        }
-        
-        preparePresentation(of: publication, book: book)
-        
+    private func showBook(publication: Publication, book: Book, uiNavController: UINavigationController) {
         do {
-            let view = try self.makeReaderViewController(for: publication, book: book, resourcesServer: self.server)
-            present(view)
+            app.reader.presentPublication(publication: publication, book: book, in: uiNavController)
         } catch {
             print("Show reader failed")
         }
@@ -82,45 +64,9 @@ public class ReadiumWrapper: ReaderFormatModuleDelegate {
     
     private func openPublication(at url: URL, allowUserInteraction: Bool, sender: UIViewController?) -> Deferred<Publication, Error> {
         return deferred {
-            self.streamer.open(asset: FileAsset(url: url), allowUserInteraction: allowUserInteraction, sender: sender, completion: $0)
+            self.streamer.open(asset: FileAsset(file: FileURL(url: url)!, mediaType: "application/epub"), allowUserInteraction: allowUserInteraction, sender: sender, completion: $0)
         }
         .eraseToAnyError()
-    }
-    
-    private func makeReaderViewController(for publication: Publication, book: Book, resourcesServer: ResourcesServer) throws -> ReadiumWrapperViewController {
-        guard publication.metadata.identifier != nil else {
-            throw ReaderError.epubNotValid
-        }
-        
-        let epubViewController = ReadiumWrapperViewController(publication: publication, book: book, resourcesServer: resourcesServer)
-        epubViewController.moduleDelegate = self
-        epubViewController.darkMode = self.darkMode
-        return epubViewController
-    }
-    
-    private func preparePresentation(of publication: Publication, book: Book) {
-        // If the book is a webpub, it means it is loaded remotely from a URL, and it doesn't need to be added to the publication server.
-        guard publication.format != .webpub else {
-            return
-        }
-        
-        server.removeAll()
-        do {
-            try server.add(publication)
-        } catch {
-            print("Couldn't add book to server")
-        }
-    }
-    
-    private func setProperties(publication: Publication) {
-//        publication.userProperties.
-    }
-    
-    internal func presentOutline(of publication: Publication, delegate: OutlineTableViewControllerDelegate?, from viewController: UIViewController) {
-        let outlineTableVC: OutlineTableViewController = make(publication: publication)
-        outlineTableVC.delegate = delegate
-        outlineTableVC.modalPresentationStyle = .overFullScreen
-        viewController.present(UINavigationController(rootViewController: outlineTableVC), animated: true)
     }
     
     internal func presentDRM(for publication: Publication, from viewController: UIViewController) {
@@ -134,30 +80,22 @@ public class ReadiumWrapper: ReaderFormatModuleDelegate {
     internal func presentError(_ error: Error?, from viewController: UIViewController) {
         // NOT NEEDED
     }
-    
-    func make(publication: Publication) -> OutlineTableViewController {
-        let storyboard = UIStoryboard(name: "Outline", bundle: Bundle(for: ReadiumWrapper.self))
-        let controller = storyboard.instantiateViewController(withIdentifier: "OutlineTableViewController") as! OutlineTableViewController
-        controller.publication = publication
-        return controller
-    }
 }
 
 private extension Book {
     
     /// Creates a new `Book` from a Readium `Publication` and its URL.
-    convenience init(publication: Publication, url: URL) {
+    init(publication: Publication, url: URL) {
         self.init(
-            href: (url.isFileURL || url.scheme == nil) ? url.lastPathComponent : url.absoluteString,
-            title: publication.metadata.title,
-            author: publication.metadata.authors
-                .map { $0.name }
-                .joined(separator: ", "),
             identifier: publication.metadata.identifier ?? url.lastPathComponent,
-            cover: publication.cover?.pngData()
+            title: publication.metadata.title!,
+            authors: publication.metadata.authors
+                            .map { $0.name }
+                            .joined(separator: ", "),
+            type: "application/epub",
+            path: (url.isFileURL || url.scheme == nil) ? url.lastPathComponent : url.absoluteString
         )
     }
-    
 }
 
 private class ReadiumWrapperViewController: EPUBViewController {
@@ -168,9 +106,9 @@ private class ReadiumWrapperViewController: EPUBViewController {
         self.navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(self.close(sender:)))
         
         if (darkMode) {
-            userSettingNavigationController.appearanceDidChange(to: 2)
+//            userSettingNavigationController.appearanceDidChange(to: 2)
         } else {
-            userSettingNavigationController.appearanceDidChange(to: 0)
+//            userSettingNavigationController.appearanceDidChange(to: 0)
         }
     }
     

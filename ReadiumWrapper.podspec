@@ -1,8 +1,8 @@
 Pod::Spec.new do |spec|
 
-    spec.name         = "ReadiumWrapper"
-    spec.version      = "0.1.1"
-    spec.summary      = "A simple wrapper for Readium"
+    spec.name         = "ReadiumWrapperMigrated"
+    spec.version      = "0.1.0"
+    spec.summary      = "A simple wrapper for Readium. Cloned from https://github.com/bmcalister/readium-wrapper"
     spec.homepage     = "https://github.com/bmcalister/readium-wrapper"
     spec.license      = 'BSD 3-Clause License'
     spec.author       = { "Brian Mc Alister" => "brian@mca.io" }
@@ -34,7 +34,7 @@ Pod::Spec.new do |spec|
     # spec.dependency  'ReadiumOPDS', '2.0.0-beta.1'
 
     spec.preserve_paths = 'Frameworks/Build/iOS/*.framework'
-    spec.vendored_frameworks = 'Frameworks/Build/iOS/CryptoSwift.framework','Frameworks/Build/iOS/Fuzi.framework','Frameworks/Build/iOS/GCDWebServer.framework','Frameworks/Build/iOS/Kingfisher.framework','Frameworks/Build/iOS/KingfisherSwiftUI.framework','Frameworks/Build/iOS/MBProgressHUD.framework','Frameworks/Build/iOS/Minizip.framework','Frameworks/Build/iOS/R2Navigator.framework','Frameworks/Build/iOS/R2Shared.framework','Frameworks/Build/iOS/R2Streamer.framework','Frameworks/Build/iOS/ReadiumOPDS.framework','Frameworks/Build/iOS/SQLite.framework','Frameworks/Build/iOS/SwiftSoup.framework','Frameworks/Build/iOS/ZIPFoundation.framework'
+    spec.vendored_frameworks = 'Frameworks/Build/iOS/*.framework'
     spec.ios.frameworks = 'CoreServices', 'SystemConfiguration'
   end
   

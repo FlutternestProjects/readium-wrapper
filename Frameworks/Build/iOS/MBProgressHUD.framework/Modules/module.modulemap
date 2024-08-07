@@ -1,5 +1,5 @@
 framework module MBProgressHUD {
-  umbrella header "MBProgressHUD.h"
+  umbrella header "MBProgressHUD-umbrella.h"
 
   export *
   module * { export * }

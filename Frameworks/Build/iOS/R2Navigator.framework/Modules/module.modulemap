@@ -1,4 +1,0 @@
-framework module R2Navigator {
-  header "R2Navigator-Swift.h"
-  requires objc
-}

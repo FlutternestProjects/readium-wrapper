@@ -1,11 +1,11 @@
 framework module Fuzi {
-  umbrella header "Fuzi.h"
+  umbrella header "Fuzi-umbrella.h"
 
   export *
   module * { export * }
 }
 
 module Fuzi.Swift {
-    header "Fuzi-Swift.h"
-    requires objc
+  header "Fuzi-Swift.h"
+  requires objc
 }
